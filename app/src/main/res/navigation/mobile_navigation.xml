@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation.xml"
+    android:label="首頁"
+    app:startDestination="@id/navigation_main">
+
+    <fragment
+        android:id="@+id/navigation_main"
+        android:name="tw.com.intersense.signalrchat.ui.main.MainFragment"
+        android:label="首頁"
+        tools:layout="@layout/fragment_chat">
+        <action
+            android:id="@+id/action_mainFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="tw.com.intersense.signalrchat.ui.login.LoginFragment"
+        android:label="LoginFragment" >
+        <action
+            android:id="@+id/action_loginFragment_to_mainFragment"
+            app:destination="@id/navigation_main"
+            app:popUpTo="@id/navigation_main" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="tw.com.intersense.signalrchat.ui.chat.ChatFragment"
+        android:label="ChatFragment" >
+        <argument
+            android:name="chatId"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="productId"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="productName"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="null" />
+        <argument
+            android:name="productUserId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="null" />
+        <argument
+            android:name="productUserName"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="null" />
+    </fragment>
+    <fragment
+        android:id="@+id/navigation_product"
+        android:name="tw.com.intersense.signalrchat.ui.product.ProductFragment"
+        android:label="商品" >
+        <action
+            android:id="@+id/action_productFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+    </fragment>
+</navigation>
