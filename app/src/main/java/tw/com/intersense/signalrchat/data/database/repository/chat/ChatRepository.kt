@@ -10,7 +10,6 @@ import tw.com.intersense.signalrchat.data.database.repository.message.Message
 
 class ChatRepository internal constructor(
     private val chatDao: ChatDao,
-    private val chatUserDao: ChatUserDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 )  {
 
@@ -34,42 +33,29 @@ class ChatRepository internal constructor(
         }
     }
 
-    suspend fun saveChatUsers(vararg chatUsers: ChatUser)= withContext(ioDispatcher) {
-        try {
-            chatUserDao.insertAll(*chatUsers)
-        } catch (e: Exception) {
-            Timber.d(e)
-        }
-    }
-
     suspend fun updateLastMessage(m: Message)= withContext(ioDispatcher) {
         try {
-            if(chatDao.getChat(m.chatId) != null)
-                chatDao.updateLastMessage(m.chatId, m.text, m.time)
+            var c = chatDao.getChat(m.productId, m.askerPhoneId)
+            c?.let {
+
+                chatDao.updateLastMessage(m.productId, m.askerPhoneId, m.messageText, m.messageType, m.createTime, it.notReadCount+1)
+            }
         } catch (e: Exception) {
             Timber.d(e)
         }
     }
 
-    suspend fun getChat(id: Int): RepoResult<Chat> = withContext(ioDispatcher) {
-        return@withContext try {
-            RepoResult.Success(chatDao.getChat(id))
+    suspend fun setRead(productId: Int, askerPhoneId: String)= withContext(ioDispatcher) {
+        try {
+            chatDao.setRead(productId, askerPhoneId)
         } catch (e: Exception) {
-            RepoResult.Error(e)
+            Timber.d(e)
         }
     }
 
-    suspend fun getChatByProductId(productId: Int): RepoResult<Chat> = withContext(ioDispatcher) {
+    suspend fun getChat(productId: Int, askerPhoneId: String): RepoResult<Chat> = withContext(ioDispatcher) {
         return@withContext try {
-            RepoResult.Success(chatDao.getChatByProductId(productId))
-        } catch (e: Exception) {
-            RepoResult.Error(e)
-        }
-    }
-
-    suspend fun getChatUser(chatId: Int): RepoResult<List<ChatUser>> = withContext(ioDispatcher) {
-        return@withContext try {
-            RepoResult.Success(chatUserDao.getChatUser(chatId))
+            RepoResult.Success(chatDao.getChat(productId, askerPhoneId))
         } catch (e: Exception) {
             RepoResult.Error(e)
         }

@@ -14,7 +14,6 @@ import tw.com.intersense.signalrchat.data.database.repository.chat.Chat
 import tw.com.intersense.signalrchat.data.database.repository.chat.ChatRepository
 import tw.com.intersense.signalrchat.data.database.repository.message.Message
 import tw.com.intersense.signalrchat.data.database.repository.message.MessageRepository
-import tw.com.intersense.signalrchat.data.database.repository.user.UserRepository
 import tw.com.intersense.signalrchat.data.network.ChatHubHelper
 import javax.inject.Inject
 import tw.com.intersense.signalrchat.data.network.ChatHubHelperListener as ChatHubHelperListener
@@ -48,6 +47,12 @@ class MainViewModel @Inject constructor(
                 action(MainAction(MainActionType.Disconnected))
             }
 
+            override fun onNewChat(chat: Chat) {
+                viewModelScope.launch {
+                    chatRepo.saveChats(chat)
+                }
+            }
+
             override fun onUpdateChatList(listChat: Array<Chat>) {
                 viewModelScope.launch {
                     chatRepo.saveChats(*listChat)
@@ -58,12 +63,6 @@ class MainViewModel @Inject constructor(
                 viewModelScope.launch {
                     chatRepo.updateLastMessage(message)
                     messageRepo.saveMessages(message)
-                }
-            }
-
-            override fun onNewChat(chat: Chat) {
-                viewModelScope.launch {
-                    chatRepo.saveChats(chat)
                 }
             }
         }

@@ -45,13 +45,12 @@ class ProductFragment : Fragment() {
     }
 
     private fun setupList() {
-        adapter = ProductAdapter(){
+        adapter = ProductAdapter(this){
             //item click
             item ->
             val navController = NavHostFragment.findNavController(this)
             val action = ProductFragmentDirections.actionProductFragmentToChatFragment(
-                productId = item.id, productName = item.name,
-                productUserId = item.userId, productUserName = item.userName)
+               item.productId, null, item)
             navController.navigate(action)
         }
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {

@@ -11,7 +11,7 @@ import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
 // The base URL where our API is
-private const val BASE_URL = "http://192.168.1.105:44389/"
+private const val BASE_URL = "http://192.168.1.101:44389/"
 
 /* Moshi Makes it easy to parse JSON into objects
 you can use GSON instead if you want*/
@@ -41,7 +41,7 @@ interface ApiService{
     @POST("/api/Account/Login")
     fun Login(@Field("UserId") userId: String, @Field("Password") pwd: String): Call<LoginResponse>
 
-    @GET("/api/Product/GetOtherUserProduct")
+    @POST("/api/Product/GetProductList")
     fun GetOtherUserProduct(@Header("AUTHORIZATION") tokenWithBearer: String): Call<ListProductResponse>
 
 

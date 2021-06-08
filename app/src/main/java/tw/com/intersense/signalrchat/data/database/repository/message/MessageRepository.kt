@@ -12,8 +12,8 @@ class MessageRepository internal constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 )  {
 
-    fun observeMessages(chatId: Int): LiveData<List<Message>> {
-        return dao.observeMessages(chatId)
+    fun observeMessages(productId: Int, askerPhoneId: String): LiveData<List<Message>> {
+        return dao.observeMessages(productId,askerPhoneId)
     }
 
     suspend fun getListMessage(): RepoResult<List<Message>> = withContext(ioDispatcher) {

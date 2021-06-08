@@ -7,15 +7,17 @@ import com.google.gson.annotations.SerializedName
 @Entity
 data class Message(
     @PrimaryKey
-    val id: Int,
+    val messageId: Int,
+    
+    val askerPhoneId: String,
 
-    val chatId: Int,
+    val productId: Int,
 
-    val userId: String,
+    val messageText: String,
 
-    val text: String,
+    val speakerPhoneId: String,
 
-    val time: Long,
+    val createTime: Long,
 
-    val type: Int
+    val messageType: String
 )

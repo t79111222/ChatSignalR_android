@@ -2,15 +2,16 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/avatar"
+    <ImageView
+        android:id="@+id/iv_product"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_margin="16dp"
-        android:src="@drawable/user"
+        android:src="@drawable/shipping"
         app:civ_border_color="@color/grey_80"
         app:civ_border_width="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -23,7 +24,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:ellipsize="end"
         android:fontFamily="sans-serif"
         android:lines="1"
@@ -33,9 +33,9 @@
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/tv_description"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/avatar"
-        app:layout_constraintTop_toTopOf="@+id/avatar"
+        app:layout_constraintEnd_toEndOf="@+id/tv_description"
+        app:layout_constraintStart_toEndOf="@+id/iv_product"
+        app:layout_constraintTop_toTopOf="@+id/iv_product"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
@@ -50,9 +50,9 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/grey_52"
         android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="@+id/avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/avatar"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_product"
+        app:layout_constraintEnd_toStartOf="@+id/iv_other_user"
+        app:layout_constraintStart_toEndOf="@+id/iv_product"
         app:layout_constraintTop_toBottomOf="@+id/tvName" />
 
 
@@ -68,5 +68,41 @@
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintVertical_chainStyle="packed"/>
+
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/iv_other_user"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
+        android:src="@drawable/user"
+        app:civ_border_color="@color/grey_80"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_date" />
+
+
+    <Space
+        android:id="@+id/space"
+        android:layout_width="10dp"
+        android:layout_height="60dp"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_product"
+        app:layout_constraintStart_toEndOf="@+id/iv_product" />
+
+    <TextView
+        android:id="@+id/tv_count"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:minWidth="20dp"
+        android:background="@drawable/bg_not_read"
+        android:fontFamily="sans-serif"
+        android:padding="2dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:text="1"
+        app:layout_constraintEnd_toEndOf="@+id/space"
+        app:layout_constraintTop_toTopOf="@+id/space"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

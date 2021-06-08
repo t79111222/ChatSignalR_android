@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import tw.com.intersense.signalrchat.data.database.AppDatabase
 import tw.com.intersense.signalrchat.data.database.repository.chat.ChatRepository
 import tw.com.intersense.signalrchat.data.database.repository.message.MessageRepository
-import tw.com.intersense.signalrchat.data.database.repository.user.UserRepository
 import javax.inject.Singleton
 
 /**
@@ -51,7 +50,7 @@ object AppModule {
         ioDispatcher: CoroutineDispatcher
     ): ChatRepository {
         return ChatRepository(
-            database.chatDao(), database.chatUserDao(), ioDispatcher
+            database.chatDao(), ioDispatcher
         )
     }
 
@@ -63,17 +62,6 @@ object AppModule {
     ): MessageRepository {
         return MessageRepository(
             database.messageDao(), ioDispatcher
-        )
-    }
-
-    @Singleton
-    @Provides
-    fun provideUserRepository(
-        database: AppDatabase,
-        ioDispatcher: CoroutineDispatcher
-    ): UserRepository {
-        return UserRepository(
-            database.userDao(), ioDispatcher
         )
     }
 

@@ -8,37 +8,36 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import tw.com.intersense.signalrchat.Event
 import tw.com.intersense.signalrchat.MySharedPreferences
 import tw.com.intersense.signalrchat.data.database.repository.RepoResult
 import tw.com.intersense.signalrchat.data.database.repository.chat.Chat
 import tw.com.intersense.signalrchat.data.database.repository.chat.ChatRepository
-import tw.com.intersense.signalrchat.data.database.repository.chat.ChatUser
 import tw.com.intersense.signalrchat.data.database.repository.message.Message
 import tw.com.intersense.signalrchat.data.database.repository.message.MessageRepository
-import tw.com.intersense.signalrchat.data.database.repository.user.User
-import tw.com.intersense.signalrchat.data.database.repository.user.UserRepository
 import tw.com.intersense.signalrchat.data.network.ChatHubHelper
-import tw.com.intersense.signalrchat.data.network.ChatInfo
-import java.time.Instant
+import tw.com.intersense.signalrchat.data.network.ChatMessage
+import tw.com.intersense.signalrchat.data.network.Product
 import javax.inject.Inject
+import kotlin.properties.Delegates
 import tw.com.intersense.signalrchat.data.network.ChatHubHelperListener as ChatHubHelperListener
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     val chatRepo: ChatRepository,
     val messageRepo: MessageRepository,
-    val userRepo: UserRepository,
     val  mySharedPreferences: MySharedPreferences
 ) : ViewModel() {
 
     lateinit var listMessage: LiveData<List<Message>>
-    private var _chatId = 0
-    private var _productId = 0
+    var _productId by Delegates.notNull<Int>()
+    lateinit var _askerPhoneId: String
+    private var _product: Product? = null
+
     var chat: Chat? = null
-    var productUser: User? = null
-    var reqestUser: User? = null
-    var myUserId = mySharedPreferences.getUserId()
+    var myPhoneId = mySharedPreferences.getPhoneId()?:""
+
     private val _action = MutableLiveData<Event<ChatAction>>()
     val action: LiveData<Event<ChatAction>>
         get() = _action
@@ -51,63 +50,87 @@ class ChatViewModel @Inject constructor(
 
             override fun onConnected(helper: ChatHubHelper) {
                 action(ChatAction(ChatActionType.Connected))
-                helper.listerUserAll()
+                if(helper.listerUserAll()){
+                    var time = mySharedPreferences.getUpdateChatAndMessageTime(_productId, _askerPhoneId)
+                    SetChatMessageRead()
+                    helper.updateChatAndMessage(_productId, _askerPhoneId, time)
+                }
             }
 
             override fun onDisconnected() {
                 action(ChatAction(ChatActionType.Disconnected))
             }
 
-            override fun onNewMessage(message: Message) {
-                viewModelScope.launch {
-                    chatRepo.updateLastMessage(message)
-                    messageRepo.saveMessages(message)
-                }
-            }
-
-            override fun onUpdateChatInfo(chatInfo: ChatInfo) {
-                viewModelScope.launch {
-                    mySharedPreferences.setChatInfoLastUpdateTime(chatInfo.id, Instant.now().epochSecond)
-                    var result = chatRepo.getChat(chatInfo.id)
-                    if(result is RepoResult.Success){
-                        var dbChat = result.data
-                        var lastM = dbChat.lastMessage
-                        var lastT = dbChat.lastTime
-                        if(chatInfo.listMessage.isNotEmpty()){
-                            var lastMessage = chatInfo.listMessage.last()
-                            lastM = lastMessage.text
-                            lastT = lastMessage.time
-                        }
-                        var chat = Chat(chatInfo.id, chatInfo.name, lastM, lastT
-                            , chatInfo.product?.id, chatInfo.product?.name, chatInfo.product?.userId)
-                        chatRepo.saveChats(chat)
-                        messageRepo.saveMessages(*chatInfo.listMessage)
-                        userRepo.saveUsers(*chatInfo.listUser)
-                        for(user in chatInfo.listUser){
-                            chatRepo.saveChatUsers(ChatUser(chat.id, user.id))
-                        }
-                    }
-                }
-            }
-
             override fun onNewChat(c: Chat) {
                 viewModelScope.launch {
                     chatRepo.saveChats(c)
-                    if(_chatId == 0 && c.productId == _productId){
+                    if(c.productId == _productId && c.askerPhoneId == _askerPhoneId){
                         //剛剛才新增的聊天室，為現在這個聊天室
                         chat = c
-                        _chatId = c.id
-                        hadCorrectChat()
+                        action(ChatAction(ChatActionType.OnChatChange))
                     }
+                }
+            }
+
+            override fun onUpdateChatAndMessage(chatMessage: ChatMessage) {
+                super.onUpdateChatAndMessage(chatMessage)
+                viewModelScope.launch {
+                    chatRepo.saveChats(chatMessage.chat)
+                    messageRepo.saveMessages(*chatMessage.listMessage)
+                }
+            }
+
+            override fun onNewMessage(message: Message) {
+                if(message.productId == _productId && message.askerPhoneId == _askerPhoneId)SetChatMessageRead()
+                viewModelScope.launch {
+                    chatRepo.updateLastMessage(message)
+                    messageRepo.saveMessages(message)
+
                 }
             }
         }
     )
 
+    fun SetChatMessageRead(){
+
+        chatHubHelper.SetChatMessageRead(_productId, _askerPhoneId)
+    }
+
+    fun setChatValue(productId: Int, askerPhoneId: String?, product: Product?) {
+        _productId = productId
+        _askerPhoneId = askerPhoneId ?: myPhoneId
+        viewModelScope.launch {
+            chatRepo.setRead(_productId, _askerPhoneId)
+            if (askerPhoneId != null) {
+                //從聊天室清單來的
+                chat = getChat(chatRepo.getChat(productId, askerPhoneId))
+            } else if(product != null){
+                //從商品清單來的
+                chat = getChat(chatRepo.getChat(productId, myPhoneId))
+                _product = product
+                if(chat == null){
+                    //本地DB找不到
+                    chat = Chat(_productId, _askerPhoneId,  _askerPhoneId, "", product.name,
+                        product.price, product.imageLink, "", product.ownerName, product.ownerImageLink,
+                        null, null, null, 0)
+                }
+            }
+
+            action(ChatAction(ChatActionType.OnChatChange))
+        }
+        listMessage = messageRepo.observeMessages(_productId, _askerPhoneId)
+
+
+        listMessage.observeForever {
+            action(ChatAction(ChatActionType.OnMessageUpdate))
+        }
+    }
 
     fun onResume() {
-        if(chat != null) {//剛進來不會連線,直到拿到正確的chat id才連線
-            connectChatHub()
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                chatHubHelper.connect()
+            }
         }
     }
 
@@ -121,11 +144,7 @@ class ChatViewModel @Inject constructor(
     }
 
     fun onSend(messageText:String): Boolean{
-        return if(chat ==null){
-            chatHubHelper.createChatAndSendMessage(_productId, messageText, 1)
-        }else{
-            chatHubHelper.sendMessage(_chatId, messageText, 1)//message type = 1 is Text
-        }
+        return  chatHubHelper.sendMessage(_productId,_askerPhoneId,  messageText, "Text")
     }
 
     private fun connectChatHub(){
@@ -144,65 +163,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun setChatValue(chatId: Int, productId: Int) {
-        _productId = productId
-        viewModelScope.launch {
-            if (chatId != 0) {
-                chat = getChat(chatRepo.getChat(chatId))
-            } else if(productId != 0){
-                chat = getChat(chatRepo.getChatByProductId(productId))
-            }
-            if(chat != null){
-                _chatId = chat!!.id
-                listMessage = messageRepo.observeMessages(chat!!.id)
-                if(!chat!!.productUserId.isNullOrEmpty()){
-                    productUser = getUser(userRepo.getUser(chat!!.productUserId!!))
-                }
-                var listChatUser = getChatUSer(chatRepo.getChatUser(_chatId))
-                listChatUser?.let {
-                    for (chatUser in it){
-                        if (productUser == null){//先當成自己的產品
-                            if(chatUser.userId != myUserId){
-                                reqestUser =getUser(userRepo.getUser(chatUser.userId))
-                                break
-                            }
-                        } else{
-                            if(chatUser.userId != productUser!!.id){
-                                reqestUser =getUser(userRepo.getUser(chatUser.userId))
-                                break
-                            }
-                        }
-                    }
-                }
-            }
-            hadCorrectChat()
-        }
-    }
-
-    private fun hadCorrectChat(){
-        listMessage = messageRepo.observeMessages(_chatId)
-        var lastUpdateTime = mySharedPreferences.getChatInfoLastUpdateTime(_chatId)
-        chatHubHelper.updateChatInfo(_chatId, lastUpdateTime)
-        action(ChatAction(ChatActionType.OnChatChange))
-    }
-
     private fun getChat( r: RepoResult<Chat>) : Chat?{
-        return if(r is RepoResult.Success){
-            r.data
-        } else {
-            null
-        }
-    }
-
-    private fun getUser( r: RepoResult<User>) : User?{
-        return if(r is RepoResult.Success){
-            r.data
-        } else {
-            null
-        }
-    }
-
-    private fun getChatUSer( r: RepoResult<List<ChatUser>>) : List<ChatUser>?{
         return if(r is RepoResult.Success){
             r.data
         } else {
@@ -219,5 +180,6 @@ enum class ChatActionType {
     TokenFail,
     Connected,
     Disconnected,
-    OnChatChange
+    OnChatChange,
+    OnMessageUpdate
 }

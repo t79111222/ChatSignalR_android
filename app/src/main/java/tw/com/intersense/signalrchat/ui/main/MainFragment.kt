@@ -14,8 +14,6 @@ import timber.log.Timber
 import tw.com.intersense.signalrchat.EventObserver
 import tw.com.intersense.signalrchat.MySharedPreferences
 import tw.com.intersense.signalrchat.databinding.FragmentMainBinding
-import tw.com.intersense.signalrchat.ui.chat.ChatFragmentArgs
-import tw.com.intersense.signalrchat.ui.login.LoginFragmentDirections
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,6 +27,7 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by viewModels()
+    lateinit var myPhoneId: String
     lateinit var adapter: MainAdapter
 
     override fun onCreateView(
@@ -41,6 +40,7 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        myPhoneId = mySharedPreferences.getPhoneId()?:""
         setupList()
         setupObserve()
 
@@ -60,11 +60,11 @@ class MainFragment : Fragment() {
     }
 
     private fun setupList() {
-        adapter = MainAdapter(){
+        adapter = MainAdapter(this, myPhoneId){
             //item click
-            chatId ->
+            chatId, askerPhoneId ->
             val navController = NavHostFragment.findNavController(this)
-            val action = MainFragmentDirections.actionMainFragmentToChatFragment(chatId = chatId)
+            val action = MainFragmentDirections.actionMainFragmentToChatFragment(chatId, askerPhoneId, null)
             navController.navigate(action)
         }
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {

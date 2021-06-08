@@ -8,11 +8,10 @@ import io.reactivex.rxjava3.core.Single
 import timber.log.Timber
 import tw.com.intersense.signalrchat.MySharedPreferences
 import tw.com.intersense.signalrchat.data.database.repository.chat.Chat
-import tw.com.intersense.signalrchat.data.database.repository.chat.ChatRepository
 import tw.com.intersense.signalrchat.data.database.repository.message.Message
 import java.lang.Exception
 
-private const val BASE_URL = "http://192.168.1.105:44389/"
+private const val BASE_URL = "http://192.168.1.101:44389/"
 private const val HUB_CHAT = "ChatHub"
 
 class ChatHubHelper internal constructor(
@@ -26,16 +25,18 @@ class ChatHubHelper internal constructor(
         HubConnectionBuilder.create("$BASE_URL$HUB_CHAT").build()
 
     fun connect(): HubConnectionState {
-        var toekn = mySharedPreferences.getToken()
-        if (toekn.isNullOrEmpty()) {
+        //取得紀錄的token
+        var token = mySharedPreferences.getToken()
+        if (token.isNullOrEmpty()) {
             listener.onTokenFail()
             return HubConnectionState.DISCONNECTED
         }
         if (chatHubConnection.connectionState == HubConnectionState.DISCONNECTED) {
+            //未連線
             chatHubConnection = HubConnectionBuilder.create("$BASE_URL$HUB_CHAT")
                 .withAccessTokenProvider(Single.defer {
                     Single.just(
-                        toekn
+                        token
                     )
                 }).build()
             setHubReceive()//設定接收各通知
@@ -66,6 +67,7 @@ class ChatHubHelper internal constructor(
     fun listerUserAll(isListen:Boolean = true): Boolean {
         try {
             if (connect() == HubConnectionState.CONNECTED) {
+                //11.0.1-監聽User的所有資訊 & 11.0.2-取消監聽User的所有資訊
                 chatHubConnection.invoke(if(isListen) HubListen.USER_ALL.method else  HubUnListen.USER_ALL.method)
                 return true
             }
@@ -81,61 +83,6 @@ class ChatHubHelper internal constructor(
         chatHubConnection.onClosed {
             listener.onDisconnected()
         }
-
-        //HubRequest.GET_USER_CHATS 的回傳資訊
-        chatHubConnection.on(HubReceive.USER_CHATS.method, { jsonString ->
-            if(!jsonString.isNullOrEmpty()){
-                try {
-                    Timber.i(TAG, "${HubReceive.USER_CHATS.method} : $jsonString")
-
-                    val gson= Gson()
-                    var list = gson.fromJson(jsonString, Array<Chat>::class.java)
-                    list?.let {
-                        listener.onUpdateChatList(it)
-                    }
-                }catch (ex: Exception){
-                    Timber.d(TAG, ex.message)
-                }
-            }
-
-        }, String::class.java)
-
-        //新的Message
-        chatHubConnection.on(HubReceive.NEW_MESSAGE.method, { jsonString ->
-            if(!jsonString.isNullOrEmpty()){
-                try {
-                    Timber.i(TAG, "${HubReceive.NEW_MESSAGE.method} : $jsonString")
-
-                    val gson= Gson()
-                    var messge = gson.fromJson(jsonString, Message::class.java)
-                     messge?.let {
-                         listener.onNewMessage(it)
-                     }
-                }catch (ex: Exception){
-                    Timber.d(TAG, ex.message)
-                }
-            }
-
-        }, String::class.java)
-
-        //Chat 更詳細的資訊
-        chatHubConnection.on(HubReceive.CHAT_INFO.method, { jsonString ->
-            if(!jsonString.isNullOrEmpty()){
-                try {
-                    Timber.i(TAG, "${HubReceive.CHAT_INFO.method} : $jsonString")
-
-                    val gson= Gson()
-                    var chatInfo = gson.fromJson(jsonString, ChatInfo::class.java)
-                    chatInfo?.let {
-                        listener.onUpdateChatInfo(it)
-                    }
-
-                }catch (ex: Exception){
-                    Timber.d(TAG, ex.message)
-                }
-            }
-
-        }, String::class.java)
 
         //有新的Chat
         chatHubConnection.on(HubReceive.NEW_CHAT.method, { jsonString ->
@@ -156,13 +103,67 @@ class ChatHubHelper internal constructor(
 
         }, String::class.java)
 
+        //HubRequest.GET_LIST_CHAT 的回傳資訊
+        chatHubConnection.on(HubReceive.GET_LIST_CHAT.method, { jsonString ->
+            if(!jsonString.isNullOrEmpty()){
+                try {
+                    Timber.i(TAG, "${HubReceive.GET_LIST_CHAT.method} : $jsonString")
+
+                    val gson= Gson()
+                    var list = gson.fromJson(jsonString, Array<Chat>::class.java)
+                    list?.let {
+                        listener.onUpdateChatList(it)
+                    }
+                }catch (ex: Exception){
+                    Timber.d(TAG, ex.message)
+                }
+            }
+
+        }, String::class.java)
+
+        //HubRequest.GET_CHAT_AND_MESSAGE 的回傳資訊
+        chatHubConnection.on(HubReceive.GET_CHAT_AND_MESSAGE.method, { jsonString ->
+            if(!jsonString.isNullOrEmpty()){
+                try {
+                    Timber.i(TAG, "${HubReceive.GET_CHAT_AND_MESSAGE.method} : $jsonString")
+                    val gson= Gson()
+                    var list = gson.fromJson(jsonString, ChatMessage::class.java)
+                    list?.let {
+                        listener.onUpdateChatAndMessage(it)
+                    }
+                }catch (ex: Exception){
+                    Timber.d(TAG, ex.message)
+                }
+            }
+
+        }, String::class.java)
+
+        //新的Message
+        chatHubConnection.on(HubReceive.NEW_MESSAGE.method, { jsonString ->
+            if(!jsonString.isNullOrEmpty()){
+                try {
+                    Timber.i(TAG, "${HubReceive.NEW_MESSAGE.method} : $jsonString")
+
+                    val gson= Gson()
+                    var message = gson.fromJson(jsonString, Message::class.java)
+                    message?.let {
+                         listener.onNewMessage(it)
+                     }
+                }catch (ex: Exception){
+                    Timber.d(TAG, ex.message)
+                }
+            }
+
+        }, String::class.java)
+
     }
 
+    //11.2.1-請求聊天室清單
     fun updateChatList(): Boolean {
         //要先Listen User All,不然會接收不到資訊
         try {
             if (connect() == HubConnectionState.CONNECTED) {
-                chatHubConnection.invoke(HubRequest.GET_USER_CHATS.method)
+                chatHubConnection.invoke(HubRequest.GET_LIST_CHAT.method)
                 return true
             }
         } catch (ex: Exception) {
@@ -171,11 +172,12 @@ class ChatHubHelper internal constructor(
         return false
     }
 
-    fun updateChatInfo(chatId:Int, messageStartTime: Long): Boolean {
+    //11.3.1-請求聊天室&訊息資訊
+    fun updateChatAndMessage(productId:Int , askerPhoneId: String, startTime: Long ): Boolean {
         //要先Listen User All,不然會接收不到資訊
         try {
             if (connect() == HubConnectionState.CONNECTED) {
-                chatHubConnection.invoke(HubRequest.GET_CHAT_INFO.method, chatId, messageStartTime)
+                chatHubConnection.invoke(HubRequest.GET_CHAT_AND_MESSAGE.method, productId, askerPhoneId, startTime)
                 return true
             }
         } catch (ex: Exception) {
@@ -184,11 +186,12 @@ class ChatHubHelper internal constructor(
         return false
     }
 
-    fun sendMessage(chatId:Int, messageText: String, messageType: Int): Boolean {
+    //11.4.1-新增訊息 ※若為第一次提問，會自動開聊天室(由11.1接收新聊天室)
+    fun sendMessage(productId:Int , askerPhoneId: String, messageText: String, messageType: String): Boolean {
         //要先Listen User All,不然會接收不到資訊
         try {
             if (connect() == HubConnectionState.CONNECTED) {
-                chatHubConnection.invoke(HubRequest.SEND_MESSAGE.method, chatId, messageText, messageType)
+                chatHubConnection.invoke(HubRequest.CREATE_MESSAGE.method, productId, askerPhoneId, messageText, messageType)
                 return true
             }
         } catch (ex: Exception) {
@@ -197,11 +200,12 @@ class ChatHubHelper internal constructor(
         return false
     }
 
-    fun createChatAndSendMessage(productId:Int, messageText: String, messageType: Int): Boolean {
+    //11.5-請求聊天室已讀
+    fun SetChatMessageRead(productId:Int , askerPhoneId: String): Boolean {
         //要先Listen User All,不然會接收不到資訊
         try {
             if (connect() == HubConnectionState.CONNECTED) {
-                chatHubConnection.invoke(HubRequest.CREATE_CHAT_AND_SEND_MESSAGE.method,productId, messageText, messageType)
+                chatHubConnection.invoke(HubRequest.SET_CHAT_MESSAGE_READ.method, productId, askerPhoneId)
                 return true
             }
         } catch (ex: Exception) {
@@ -211,25 +215,25 @@ class ChatHubHelper internal constructor(
     }
 
     enum class HubListen(val method: String){
-        USER_ALL("ListenUserAll")
+        USER_ALL("ListenUserAll")//11.0.1-監聽User的所有資訊
     }
 
     enum class HubUnListen(val method: String){
-        USER_ALL("UnListenUserAll")
+        USER_ALL("UnListenUserAll")//11.0.2-取消監聽User的所有資訊
     }
 
     enum class HubRequest(val method: String){
-        GET_USER_CHATS("GetUserChats"),
-        GET_CHAT_INFO("GetChatInfo"),
-        SEND_MESSAGE("SendMessage"),
-        CREATE_CHAT_AND_SEND_MESSAGE("CreateChatAndSendMessage")
+        GET_LIST_CHAT("GetListChat"),//11.2.1-請求聊天室清單
+        GET_CHAT_AND_MESSAGE("GetChatAndMessage"),//11.3.1-請求聊天室&訊息資訊
+        CREATE_MESSAGE("CreateMessage"),//11.4.1-新增訊息
+        SET_CHAT_MESSAGE_READ("SetChatMessageRead"),//11.5-請求聊天室已讀
     }
 
     enum class HubReceive(val method: String){
-        USER_CHATS("UserChats"),
-        NEW_MESSAGE("RecieveMessage"),
-        CHAT_INFO("ChatInfo"),
-        NEW_CHAT("NewChat")
+        NEW_CHAT("NewChat"),//11.1-接收新聊天室
+        GET_LIST_CHAT("ReceiveListChat"),//11.2.2-接收聊天室資訊
+        GET_CHAT_AND_MESSAGE("ReceiveChatAndMessage"),//11.3.2-接收聊天室&訊息資訊
+        NEW_MESSAGE("NewMessage"),//11.4.2-接收新訊息
     }
 }
 
@@ -237,8 +241,8 @@ interface ChatHubHelperListener{
     fun onTokenFail(){}
     fun onConnected(helper: ChatHubHelper){}
     fun onDisconnected(){}
-    fun onUpdateChatList(listChat: Array<Chat>){}
-    fun onNewMessage(message: Message){}
-    fun onUpdateChatInfo(chatInfo: ChatInfo){}
     fun onNewChat(chat: Chat){}
+    fun onUpdateChatList(listChat: Array<Chat>){}
+    fun onUpdateChatAndMessage(chatMessage: ChatMessage){}
+    fun onNewMessage(message: Message){}
 }

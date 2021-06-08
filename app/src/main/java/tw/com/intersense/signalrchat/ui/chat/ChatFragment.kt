@@ -17,6 +17,8 @@ import tw.com.intersense.signalrchat.databinding.FragmentChatBinding
 import javax.inject.Inject
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
+import com.bumptech.glide.Glide
+import tw.com.intersense.signalrchat.R
 
 
 @AndroidEntryPoint
@@ -38,12 +40,15 @@ class ChatFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentChatBinding.inflate(layoutInflater)
+        viewModel.setChatValue(args.productId, args.askerPhoneId, args.product)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.setChatValue(args.chatId, args.productId)
+        binding.toolbar.setNavigationOnClickListener {
+            activity?.onBackPressed()
+        }
         setupList()
         setSendEditText()
         setupObserve()
@@ -62,7 +67,7 @@ class ChatFragment : Fragment() {
     private fun setupList() {
         val phpneDensity = requireContext().resources.displayMetrics.density
 
-        mAdapter = MessageAdapter(mySharedPreferences.getUserId()?:"", phpneDensity)
+        mAdapter = MessageAdapter(this,mySharedPreferences.getPhoneId()?:"", phpneDensity)
         mAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 (binding.recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(positionStart, 0)
@@ -72,8 +77,7 @@ class ChatFragment : Fragment() {
             itemAnimator = null
             adapter = mAdapter
             layoutManager = LinearLayoutManager(context).apply {
-                stackFromEnd = true
-                reverseLayout = false
+                reverseLayout = true
             }
         }
     }
@@ -98,33 +102,26 @@ class ChatFragment : Fragment() {
     }
 
     private fun setTitleInfo(){
-        var myUserId = mySharedPreferences.getUserId()
-        if (viewModel.chat == null && args.productId != 0){
-            binding.tvRequest.text = if(myUserId != args.productUserId) "向 ${args.productUserName} 提問:" else ""
-            binding.tvProduct.text = args.productName
-        } else if(viewModel.chat != null){
+        var myPhoneId = mySharedPreferences.getPhoneId()
+        if (viewModel.chat != null){
             var chat = viewModel.chat!!
-            if(viewModel.productUser == null && viewModel.reqestUser != null){
-                //不知道產品是誰的，先當成自己的產品
-                viewModel.reqestUser?.name.let { binding.tvRequest.text = "$it 向你提問:" }
-            } else  if(viewModel.productUser != null && viewModel.reqestUser != null){
-                if(viewModel.productUser!!.id == myUserId){
-                    viewModel.reqestUser?.name.let { binding.tvRequest.text = "$it 向你提問:" }
-                }
-                else{
-                    viewModel.productUser?.name.let {  binding.tvRequest.text =  "向 $it 提問:" }
-                }
+            var urlOther = ""
+            if(chat.askerPhoneId != myPhoneId){
+                binding.title.text = chat.askerName
+                urlOther = chat.askerImageLink?:""
+            }else{
+                binding.title.text = chat.ownerName
+                urlOther = chat.ownerImageLink?:""
             }
+            var urlProduct = ""
+            chat.productImagesString?.let {
+                val listProductImage =it.split(",").toTypedArray()
+                if(listProductImage.isNotEmpty()) urlProduct = listProductImage[0]
+            }
+            Glide.with(this).load(urlProduct).placeholder(R.drawable.shipping).into(binding.ivProduct)
             binding.tvProduct.text = chat.productName
+            binding.tvPrice.text = "NT ${chat.price}"
         }
-    }
-
-    private fun setListMessageObserve(){
-        viewModel.listMessage.observe(viewLifecycleOwner,
-            {
-                Timber.d(TAG, "ListChat onChanged: ")
-                mAdapter.submitList(it)
-            })
     }
 
     private fun setupObserve() {
@@ -136,7 +133,10 @@ class ChatFragment : Fragment() {
                 ChatActionType.Disconnected -> binding.disconnected.visibility = View.VISIBLE
                 ChatActionType.OnChatChange ->{
                     setTitleInfo()
-                    setListMessageObserve()
+//                    setListMessageObserve()
+//                    mAdapter.submitList(viewModel.listMessage.value)
+                }
+                ChatActionType.OnMessageUpdate ->{
                     mAdapter.submitList(viewModel.listMessage.value)
                 }
             }

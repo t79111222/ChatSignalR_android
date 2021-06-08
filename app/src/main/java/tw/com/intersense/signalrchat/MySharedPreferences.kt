@@ -1,6 +1,7 @@
 package tw.com.intersense.signalrchat
 
 import android.content.Context
+import tw.com.intersense.signalrchat.data.network.Product
 
 class MySharedPreferences(private val context: Context) {
     companion object {
@@ -31,35 +32,24 @@ class MySharedPreferences(private val context: Context) {
         val settings = context.getSharedPreferences(DATA, 0)
         settings.edit().putString(KEY_TOKEN, token).apply()
     }
-
-    fun getUserName(): String? {
-        val settings = context.getSharedPreferences(DATA, 0)
-        return settings.getString(KEY_USER_NAME, "")
-    }
-
-    fun setUserName(userName: String) {
-        val settings = context.getSharedPreferences(DATA, 0)
-        settings.edit().putString(KEY_USER_NAME, userName).apply()
-    }
-
-    fun getUserId(): String? {
+    fun getPhoneId(): String? {
         val settings = context.getSharedPreferences(DATA, 0)
         return settings.getString(KEY_USER_ID, "")
     }
 
-    fun setUserId(id: String) {
+    fun setPhoneId(id: String) {
         val settings = context.getSharedPreferences(DATA, 0)
         settings.edit().putString(KEY_USER_ID, id).apply()
     }
 
-    fun getChatInfoLastUpdateTime(chatId: Int): Long {
+    fun getUpdateChatAndMessageTime(productId: Int, askerPhoneId:String): Long {
         val settings = context.getSharedPreferences(DATA, 0)
-        return settings.getLong(KEY_CHAT_INFO_UPDATE_TIME+chatId, 0)
+        return settings.getLong("${KEY_CHAT_INFO_UPDATE_TIME}_${productId}_${askerPhoneId}", 0)
     }
 
-    fun setChatInfoLastUpdateTime(chatId: Int, lastUpdateTime: Long) {
+    fun setUpdateChatAndMessageTime(productId: Int, askerPhoneId:String, lastUpdateTime: Long) {
         val settings = context.getSharedPreferences(DATA, 0)
-        settings.edit().putLong(KEY_CHAT_INFO_UPDATE_TIME+chatId, lastUpdateTime).apply()
+        settings.edit().putLong("${KEY_CHAT_INFO_UPDATE_TIME}_${productId}_${askerPhoneId}", lastUpdateTime).apply()
     }
 
 }

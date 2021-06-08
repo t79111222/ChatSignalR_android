@@ -59,8 +59,7 @@ class LoginFragment : Fragment() {
                 }
                 mySharedPreferences.isLogin(true)
                 mySharedPreferences.setToken(r.accessToken)
-                mySharedPreferences.setUserName(r.userName)
-                mySharedPreferences.setUserId(r.userId)
+                mySharedPreferences.setPhoneId(r.userId)
                 val navController = NavHostFragment.findNavController(this)
                 val action = LoginFragmentDirections.actionLoginFragmentToMainFragment()
                 navController.navigate(action)

@@ -4,30 +4,36 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(primaryKeys = ["productId","askerPhoneId"])
 data class Chat(
-    @PrimaryKey
-    val id: Int,
 
-//    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-//    val avatar: ByteArray,
+    val productId: Int,
 
-    val name: String?,
+    val askerPhoneId: String,
 
-//    val unreadCount: Int,
+    val askerName: String,
 
-    val lastMessage: String?,
+    val askerImageLink: String?,
 
-    val lastTime: Long?,
+    val productName: String,
 
-    val productId: Int?,
+    val price: Int,
 
-    val productName: String?,
+    val productImagesString: String?,
 
-//    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-//    val productImage: ByteArray,
+    val ownerPhoneId: String,
 
-    val productUserId: String?,
+    val ownerName: String,
+
+    val ownerImageLink: String,
+
+    val lastMessageText: String?,
+
+    val lastMessageType: String?,
+
+    val lastMessageTime: Long?,
+
+    val notReadCount: Int,
 
     )
 

@@ -3,10 +3,14 @@ package tw.com.intersense.signalrchat.ui.chat
 import android.graphics.Color
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import tw.com.intersense.signalrchat.R
 import tw.com.intersense.signalrchat.data.database.repository.message.Message
 import tw.com.intersense.signalrchat.databinding.ItemMessageBinding
 import java.time.Instant
@@ -15,7 +19,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class MessageAdapter internal constructor(
-    private var userId: String,
+    private val fragment: Fragment,
+    private var myPhoneId: String,
     private var phpneDensity: Float,
 ) :
     ListAdapter<Message, MessageAdapter.ViewHolder>(MessageDiffCallback()) {
@@ -23,8 +28,7 @@ class MessageAdapter internal constructor(
     val dp16 = (phpneDensity * 16).toInt()
 
     override fun submitList(list: List<Message>?) {
-        val let = list?.let { ArrayList(it) }
-        super.submitList(let)
+        super.submitList(list?.let { ArrayList(it) })
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -34,7 +38,7 @@ class MessageAdapter internal constructor(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
         holder.bind(item)
-        if(item.userId == userId){
+        if(item.speakerPhoneId == myPhoneId){
             holder.binding.llLayout.setPadding(dp50,dp16,dp16,dp16)
             holder.binding.llLayout.gravity = Gravity.RIGHT
             holder.binding.tvMessage.setBackgroundColor(Color.parseColor("#FF2EC71F"))
@@ -46,14 +50,23 @@ class MessageAdapter internal constructor(
             holder.binding.tvMessage.setBackgroundColor(Color.parseColor("#FFFFFFFF"))
             holder.binding.tvMessage.setTextColor(Color.parseColor("#FF000000"))
         }
+        if(item.messageType == "Sticker"){
+            holder.binding.tvMessage.visibility = View.GONE
+            holder.binding.sticker.visibility = View.VISIBLE
+            Glide.with(fragment).load(item.messageText).into(holder.binding.sticker)
+        }
+        else{
+            holder.binding.tvMessage.visibility = View.VISIBLE
+            holder.binding.sticker.visibility = View.GONE
+        }
     }
 
     class ViewHolder private constructor(val binding: ItemMessageBinding) :
         RecyclerView.ViewHolder(binding.root) {
         private  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         fun bind(item: Message) {
-            binding.tvMessage.text = item.text
-            item.time?.let {
+            binding.tvMessage.text = item.messageText
+            item.createTime?.let {
                 var instant = Instant.ofEpochSecond(it)
                 var localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
                 binding.tvDate.text = dateTimeFormatter.format(localDateTime)
@@ -72,7 +85,7 @@ class MessageAdapter internal constructor(
 
 class MessageDiffCallback : DiffUtil.ItemCallback<Message>() {
     override fun areItemsTheSame(oldItem: Message, newItem: Message): Boolean {
-        return oldItem.id == newItem.id
+        return (oldItem.productId == newItem.productId && oldItem.askerPhoneId == newItem.askerPhoneId)
     }
 
     override fun areContentsTheSame(oldItem: Message, newItem: Message): Boolean {
