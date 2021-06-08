@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import tw.com.intersense.signalrchat.Event
 import tw.com.intersense.signalrchat.MySharedPreferences
 import tw.com.intersense.signalrchat.data.database.repository.RepoResult
@@ -64,7 +63,7 @@ class ChatViewModel @Inject constructor(
             override fun onNewChat(c: Chat) {
                 viewModelScope.launch {
                     chatRepo.saveChats(c)
-                    if(c.productId == _productId && c.askerPhoneId == _askerPhoneId){
+                    if(c.ProductId == _productId && c.AskerPhoneId == _askerPhoneId){
                         //剛剛才新增的聊天室，為現在這個聊天室
                         chat = c
                         action(ChatAction(ChatActionType.OnChatChange))
@@ -75,13 +74,13 @@ class ChatViewModel @Inject constructor(
             override fun onUpdateChatAndMessage(chatMessage: ChatMessage) {
                 super.onUpdateChatAndMessage(chatMessage)
                 viewModelScope.launch {
-                    chatRepo.saveChats(chatMessage.chat)
-                    messageRepo.saveMessages(*chatMessage.listMessage)
+                    chatRepo.saveChats(chatMessage.Chat)
+                    messageRepo.saveMessages(*chatMessage.ListMessage)
                 }
             }
 
             override fun onNewMessage(message: Message) {
-                if(message.productId == _productId && message.askerPhoneId == _askerPhoneId)SetChatMessageRead()
+                if(message.ProductId == _productId && message.AskerPhoneId == _askerPhoneId)SetChatMessageRead()
                 viewModelScope.launch {
                     chatRepo.updateLastMessage(message)
                     messageRepo.saveMessages(message)
@@ -110,8 +109,8 @@ class ChatViewModel @Inject constructor(
                 _product = product
                 if(chat == null){
                     //本地DB找不到
-                    chat = Chat(_productId, _askerPhoneId,  _askerPhoneId, "", product.name,
-                        product.price, product.imageLink, "", product.ownerName, product.ownerImageLink,
+                    chat = Chat(_productId, _askerPhoneId,  _askerPhoneId, "", product.Name,
+                        product.Price, product.ImageLink, "", product.OwnerName, product.OwnerImageLink,
                         null, null, null, 0)
                 }
             }

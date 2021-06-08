@@ -35,10 +35,10 @@ class ChatRepository internal constructor(
 
     suspend fun updateLastMessage(m: Message)= withContext(ioDispatcher) {
         try {
-            var c = chatDao.getChat(m.productId, m.askerPhoneId)
+            var c = chatDao.getChat(m.ProductId, m.AskerPhoneId)
             c?.let {
 
-                chatDao.updateLastMessage(m.productId, m.askerPhoneId, m.messageText, m.messageType, m.createTime, it.notReadCount+1)
+                chatDao.updateLastMessage(m.ProductId, m.AskerPhoneId, m.MessageText, m.MessageType, m.CreateTime, it.NotReadCount+1)
             }
         } catch (e: Exception) {
             Timber.d(e)

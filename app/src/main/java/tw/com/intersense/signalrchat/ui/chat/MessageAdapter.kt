@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import tw.com.intersense.signalrchat.R
 import tw.com.intersense.signalrchat.data.database.repository.message.Message
 import tw.com.intersense.signalrchat.databinding.ItemMessageBinding
 import java.time.Instant
@@ -38,7 +37,7 @@ class MessageAdapter internal constructor(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
         holder.bind(item)
-        if(item.speakerPhoneId == myPhoneId){
+        if(item.SpeakerPhoneId == myPhoneId){
             holder.binding.llLayout.setPadding(dp50,dp16,dp16,dp16)
             holder.binding.llLayout.gravity = Gravity.RIGHT
             holder.binding.tvMessage.setBackgroundColor(Color.parseColor("#FF2EC71F"))
@@ -50,10 +49,10 @@ class MessageAdapter internal constructor(
             holder.binding.tvMessage.setBackgroundColor(Color.parseColor("#FFFFFFFF"))
             holder.binding.tvMessage.setTextColor(Color.parseColor("#FF000000"))
         }
-        if(item.messageType == "Sticker"){
+        if(item.MessageType == "Sticker"){
             holder.binding.tvMessage.visibility = View.GONE
             holder.binding.sticker.visibility = View.VISIBLE
-            Glide.with(fragment).load(item.messageText).into(holder.binding.sticker)
+            Glide.with(fragment).load(item.MessageText).into(holder.binding.sticker)
         }
         else{
             holder.binding.tvMessage.visibility = View.VISIBLE
@@ -65,8 +64,8 @@ class MessageAdapter internal constructor(
         RecyclerView.ViewHolder(binding.root) {
         private  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         fun bind(item: Message) {
-            binding.tvMessage.text = item.messageText
-            item.createTime?.let {
+            binding.tvMessage.text = item.MessageText
+            item.CreateTime?.let {
                 var instant = Instant.ofEpochSecond(it)
                 var localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
                 binding.tvDate.text = dateTimeFormatter.format(localDateTime)
@@ -85,7 +84,7 @@ class MessageAdapter internal constructor(
 
 class MessageDiffCallback : DiffUtil.ItemCallback<Message>() {
     override fun areItemsTheSame(oldItem: Message, newItem: Message): Boolean {
-        return (oldItem.productId == newItem.productId && oldItem.askerPhoneId == newItem.askerPhoneId)
+        return (oldItem.ProductId == newItem.ProductId && oldItem.AskerPhoneId == newItem.AskerPhoneId)
     }
 
     override fun areContentsTheSame(oldItem: Message, newItem: Message): Boolean {

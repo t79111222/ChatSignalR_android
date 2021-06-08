@@ -1,6 +1,5 @@
 package tw.com.intersense.signalrchat.ui.main
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
@@ -14,7 +13,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import android.R.string
 import android.view.View
 import tw.com.intersense.signalrchat.R
 
@@ -38,21 +36,21 @@ class MainAdapter internal constructor (
         val item = getItem(position)
         holder.bind(item)
         holder.itemView.setOnClickListener{
-            clickItem(item.productId, item.askerPhoneId)
+            clickItem(item.ProductId, item.AskerPhoneId)
         }
         var urlProduct = ""
-        item.productImagesString?.let {
+        item.ProductImagesString?.let {
             val listProductImage =it.split(",").toTypedArray()
             if(listProductImage.isNotEmpty()) urlProduct = listProductImage[0]
         }
         Glide.with(fragment).load(urlProduct).placeholder(R.drawable.shipping).into(holder.binding.ivProduct)
 
         var urlOtherUser: String? = ""
-        if(item.askerPhoneId != myPhoneId){
-            urlOtherUser = item.askerImageLink
+        if(item.AskerPhoneId != myPhoneId){
+            urlOtherUser = item.AskerImageLink
         }
         else{
-            urlOtherUser = item.ownerImageLink
+            urlOtherUser = item.OwnerImageLink
         }
         Glide.with(fragment).load(urlOtherUser).placeholder(R.drawable.user).into(holder.binding.ivOtherUser)
 
@@ -62,15 +60,15 @@ class MainAdapter internal constructor (
         RecyclerView.ViewHolder(binding.root) {
         private  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         fun bind(item: Chat) {
-            binding.tvName.text = item.productName
+            binding.tvName.text = item.ProductName
             binding.tvDescription.text = ""
             binding.tvDate.text = ""
-            binding.tvCount.text = item.notReadCount.toString()
-            binding.tvCount.visibility = if(item.notReadCount > 0) View.VISIBLE else View.GONE
-            item.lastMessageType?.let {
-                binding.tvDescription.text = if(item.lastMessageType == "Sticker")"[貼圖]" else (item.lastMessageText ?: "")
+            binding.tvCount.text = item.NotReadCount.toString()
+            binding.tvCount.visibility = if(item.NotReadCount > 0) View.VISIBLE else View.GONE
+            item.LastMessageType?.let {
+                binding.tvDescription.text = if(item.LastMessageType == "Sticker")"[貼圖]" else (item.LastMessageText ?: "")
             }
-            item.lastMessageTime?.let {
+            item.LastMessageTime?.let {
                 var instant = Instant.ofEpochSecond(it)
                 var localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
                 binding.tvDate.text = dateTimeFormatter.format(localDateTime)
@@ -89,7 +87,7 @@ class MainAdapter internal constructor (
 
 class ChatDiffCallback : DiffUtil.ItemCallback<Chat>() {
     override fun areItemsTheSame(oldItem: Chat, newItem: Chat): Boolean {
-        return (oldItem.productId == newItem.productId && oldItem.askerPhoneId == newItem.askerPhoneId)
+        return (oldItem.ProductId == newItem.ProductId && oldItem.AskerPhoneId == newItem.AskerPhoneId)
     }
 
     override fun areContentsTheSame(oldItem: Chat, newItem: Chat): Boolean {

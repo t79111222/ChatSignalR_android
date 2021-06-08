@@ -6,7 +6,7 @@ import androidx.room.*
 @Dao
 interface MessageDao {
 
-    @Query("SELECT * FROM Message WHERE productId = :productId AND askerPhoneId = :askerPhoneId ORDER BY createTime desc")
+    @Query("SELECT * FROM Message WHERE ProductId = :productId AND AskerPhoneId = :askerPhoneId ORDER BY CreateTime desc")
     fun observeMessages(productId: Int, askerPhoneId: String): LiveData<List<Message>>
 
     @Query("SELECT * FROM Message")

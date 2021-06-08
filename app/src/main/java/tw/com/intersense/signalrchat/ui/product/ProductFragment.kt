@@ -50,7 +50,7 @@ class ProductFragment : Fragment() {
             item ->
             val navController = NavHostFragment.findNavController(this)
             val action = ProductFragmentDirections.actionProductFragmentToChatFragment(
-               item.productId, null, item)
+               item.ProductId, null, item)
             navController.navigate(action)
         }
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
@@ -72,11 +72,11 @@ class ProductFragment : Fragment() {
                     }
                     it.ProductsResponse?.let {
                         respose ->
-                        if(respose.resultCode != 0){
+                        if(respose.ResultCode != 0){
                             Toast.makeText(context, "更新失敗", Toast.LENGTH_LONG).show()
                         }
                         else{
-                            adapter.submitList(respose.listProduct)
+                            adapter.submitList(respose.ListProduct)
                         }
                     }
                 }

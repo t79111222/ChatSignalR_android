@@ -10,7 +10,6 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import tw.com.intersense.signalrchat.EventObserver
 import tw.com.intersense.signalrchat.MySharedPreferences
 import tw.com.intersense.signalrchat.databinding.FragmentChatBinding
@@ -106,21 +105,21 @@ class ChatFragment : Fragment() {
         if (viewModel.chat != null){
             var chat = viewModel.chat!!
             var urlOther = ""
-            if(chat.askerPhoneId != myPhoneId){
-                binding.title.text = chat.askerName
-                urlOther = chat.askerImageLink?:""
+            if(chat.AskerPhoneId != myPhoneId){
+                binding.title.text = chat.AskerName
+                urlOther = chat.AskerImageLink?:""
             }else{
-                binding.title.text = chat.ownerName
-                urlOther = chat.ownerImageLink?:""
+                binding.title.text = chat.OwnerName
+                urlOther = chat.OwnerImageLink?:""
             }
             var urlProduct = ""
-            chat.productImagesString?.let {
+            chat.ProductImagesString?.let {
                 val listProductImage =it.split(",").toTypedArray()
                 if(listProductImage.isNotEmpty()) urlProduct = listProductImage[0]
             }
             Glide.with(this).load(urlProduct).placeholder(R.drawable.shipping).into(binding.ivProduct)
-            binding.tvProduct.text = chat.productName
-            binding.tvPrice.text = "NT ${chat.price}"
+            binding.tvProduct.text = chat.ProductName
+            binding.tvPrice.text = "NT ${chat.Price}"
         }
     }
 

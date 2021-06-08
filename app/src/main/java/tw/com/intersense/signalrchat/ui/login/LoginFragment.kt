@@ -53,13 +53,13 @@ class LoginFragment : Fragment() {
                 return@EventObserver
             }
             it.respose!!.let { r ->
-                if (r.resultCode != 0) {
-                    Toast.makeText(context, r.message, Toast.LENGTH_SHORT).show()
+                if (r.ResultCode != 0) {
+                    Toast.makeText(context, r.Message, Toast.LENGTH_SHORT).show()
                     return@EventObserver
                 }
                 mySharedPreferences.isLogin(true)
-                mySharedPreferences.setToken(r.accessToken)
-                mySharedPreferences.setPhoneId(r.userId)
+                mySharedPreferences.setToken(r.AccessToken)
+                mySharedPreferences.setPhoneId(r.UserId)
                 val navController = NavHostFragment.findNavController(this)
                 val action = LoginFragmentDirections.actionLoginFragmentToMainFragment()
                 navController.navigate(action)

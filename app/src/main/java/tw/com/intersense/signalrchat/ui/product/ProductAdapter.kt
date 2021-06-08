@@ -34,20 +34,20 @@ class ProductAdapter internal constructor (
             clickItem(item)
         }
         var urlProduct = ""
-        item.imageLink?.let {
+        item.ImageLink?.let {
             val listProductImage =it.split(",").toTypedArray()
             if(listProductImage.isNotEmpty()) urlProduct = listProductImage[0]
         }
         Glide.with(fragment).load(urlProduct).placeholder(R.drawable.shipping).into(holder.binding.ivProduct)
-        Glide.with(fragment).load(item.ownerImageLink).placeholder(R.drawable.user).into(holder.binding.ivUser)
+        Glide.with(fragment).load(item.OwnerImageLink).placeholder(R.drawable.user).into(holder.binding.ivUser)
     }
 
     class ViewHolder private constructor(val binding: ItemProductBinding) :
         RecyclerView.ViewHolder(binding.root) {
         private  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         fun bind(item: Product) {
-            binding.tvProductName.text = item.name
-            binding.tvUesrName.text = item.ownerName
+            binding.tvProductName.text = item.Name
+            binding.tvUesrName.text = item.OwnerName
         }
 
         companion object {
@@ -62,7 +62,7 @@ class ProductAdapter internal constructor (
 
 class ProductDiffCallback : DiffUtil.ItemCallback<Product>() {
     override fun areItemsTheSame(oldItem: Product, newItem: Product): Boolean {
-        return oldItem.productId == newItem.productId
+        return oldItem.ProductId == newItem.ProductId
     }
 
     override fun areContentsTheSame(oldItem: Product, newItem: Product): Boolean {
